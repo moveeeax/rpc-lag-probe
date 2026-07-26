@@ -1,0 +1,60 @@
+# rpc-lag-probe configuration.
+#
+# No credentials live in this file. Anything shaped like ${VAR} is resolved
+# from the environment when the probe starts, and the probe refuses to start if
+# a referenced variable is unset. Endpoint URLs and header values are always
+# printed redacted.
+
+# Where this probe instance is running. It ends up on every metric, every
+# evidence line and every report: a lag number without a vantage point is not
+# evidence of anything.
+region: eu-central-1
+
+interval: 2s          # head poll tick
+timeout: 1500ms       # per-call timeout; must not exceed the interval
+finality_depth: 64    # compare hashes this far behind the head, never at the head
+hash_check_interval: 30s
+
+evidence_log: ./evidence/eu-central-1.jsonl
+metrics_addr: "127.0.0.1:9102"   # Prometheus scrape target at /metrics
+
+alerts:
+  # Any endpoint that accepts a JSON POST works, including a Telegram gateway.
+  webhook_url: ${RPC_LAG_PROBE_WEBHOOK_URL}
+  lag_blocks_threshold: 3
+  lag_seconds_threshold: 30
+  for: 30s            # the condition must hold this long before alerting
+  cooldown: 10m       # and cannot re-alert within this window
+  on_divergence: true
+
+endpoints:
+  - name: provider-a-eth
+    # A key in the path is fine: it is expanded from the environment and never
+    # written to the evidence log or printed unredacted.
+    url: https://eth-mainnet.provider-a.example/v2/${PROVIDER_A_KEY}
+    chain: ethereum
+    region: eu-central-1
+
+  - name: provider-b-eth
+    url: https://rpc.provider-b.example/ethereum
+    chain: ethereum
+    region: eu-central-1
+    headers:
+      X-Api-Key: ${PROVIDER_B_KEY}
+
+  - name: public-fallback-eth
+    url: https://ethereum-rpc.publicnode.example
+    chain: ethereum
+    region: eu-central-1
+
+  - name: provider-a-base
+    url: https://base-mainnet.provider-a.example/v2/${PROVIDER_A_KEY}
+    chain: base
+    region: eu-central-1
+
+  - name: provider-b-base
+    url: https://rpc.provider-b.example/base
+    chain: base
+    region: eu-central-1
+    headers:
+      X-Api-Key: ${PROVIDER_B_KEY}
