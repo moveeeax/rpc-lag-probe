@@ -1,0 +1,28 @@
+# Binaries
+/rpc-lag-probe
+/dist/
+*.exe
+*.out
+
+# Test / coverage
+*.test
+coverage.out
+
+# Probe output: evidence logs and generated deliverables are per-engagement
+# data, never repository content.
+/evidence/
+*.jsonl
+!testdata/*.jsonl
+/reports/
+audit-*.md
+erpc-*.yaml
+
+# Local overrides that may reference real endpoints
+*.local.yaml
+.env
+.envrc
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
