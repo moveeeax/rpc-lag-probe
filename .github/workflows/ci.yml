@@ -1,0 +1,87 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.22", "1.23"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Verify formatting
+        run: test -z "$(gofmt -l .)"
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race -count=1 ./...
+
+      - name: Build
+        run: go build -o /tmp/rpc-lag-probe .
+
+      - name: Smoke-test the CLI
+        run: |
+          /tmp/rpc-lag-probe version
+          /tmp/rpc-lag-probe help
+
+      - name: Validate the shipped example config
+        env:
+          PROVIDER_A_KEY: ci-placeholder-key-aaaaaaaaaaaa
+          PROVIDER_B_KEY: ci-placeholder-key-bbbbbbbbbbbb
+          RPC_LAG_PROBE_WEBHOOK_URL: https://hooks.example/probe
+        run: |
+          /tmp/rpc-lag-probe validate --config examples/endpoints.yaml | tee /tmp/validate.txt
+          grep -q 'config OK' /tmp/validate.txt
+          # The API key must never survive into printed output.
+          ! grep -q 'ci-placeholder-key' /tmp/validate.txt
+
+      - name: Generate the audit deliverable from the sample evidence
+        run: |
+          /tmp/rpc-lag-probe report --evidence testdata/sample-evidence.jsonl \
+            --lag-blocks 2 --customer "Example Labs" --out /tmp/audit.md
+          test -s /tmp/audit.md
+          grep -q '## Hash divergence' /tmp/audit.md
+          grep -q '19999942' /tmp/audit.md
+
+      - name: Generate the eRPC upstream config
+        run: |
+          /tmp/rpc-lag-probe report --evidence testdata/sample-evidence.jsonl \
+            --format erpc --out /tmp/erpc.yaml
+          cat /tmp/erpc.yaml
+          grep -q 'chainId: 1' /tmp/erpc.yaml
+          # A generated config must never contain a real URL. Structural
+          # validation of the YAML itself lives in internal/report tests.
+          ! grep -qE 'https?://' /tmp/erpc.yaml
+
+  metrics-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Check the /metrics exposition with promtool
+        run: |
+          PROM_VER=2.53.2
+          curl -sSL "https://github.com/prometheus/prometheus/releases/download/v${PROM_VER}/prometheus-${PROM_VER}.linux-amd64.tar.gz" | tar xz
+          go run ./tools/metricsdump > /tmp/metrics.txt
+          cat /tmp/metrics.txt
+          "./prometheus-${PROM_VER}.linux-amd64/promtool" check metrics < /tmp/metrics.txt
