@@ -15,11 +15,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: ["1.22", "1.23"]
+        go-version: ["1.26", "1.27"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: ${{ matrix.go-version }}
 
@@ -72,15 +72,15 @@ jobs:
   metrics-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
-          go-version: "1.23"
+          go-version: "1.27"
 
       - name: Check the /metrics exposition with promtool
         run: |
-          PROM_VER=2.53.2
+          PROM_VER=3.15.1
           curl -sSL "https://github.com/prometheus/prometheus/releases/download/v${PROM_VER}/prometheus-${PROM_VER}.linux-amd64.tar.gz" | tar xz
           go run ./tools/metricsdump > /tmp/metrics.txt
           cat /tmp/metrics.txt
