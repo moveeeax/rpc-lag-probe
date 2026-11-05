@@ -9,7 +9,7 @@ import (
 	"github.com/moveeeax/rpc-lag-probe/internal/analysis"
 	"github.com/moveeeax/rpc-lag-probe/internal/evidence"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 const fixture = "../../testdata/sample-evidence.jsonl"
