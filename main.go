@@ -31,7 +31,7 @@ import (
 )
 
 // version is overridden at build time with -ldflags "-X main.version=...".
-var version = "v0.1.0"
+var version = "v0.2.0"
 
 const usage = `rpc-lag-probe %s — independent evidence that an RPC endpoint is serving stale state.
 

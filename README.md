@@ -32,7 +32,7 @@ cd rpc-lag-probe
 go build -o rpc-lag-probe .
 ```
 
-Go 1.22 or newer. One dependency (`gopkg.in/yaml.v3`) — the binary is meant to be dropped onto a small VM in each region you care about.
+Go 1.26 or newer. One dependency (`go.yaml.in/yaml/v3`) — the binary is meant to be dropped onto a small VM in each region you care about.
 
 ## Usage
 
@@ -210,3 +210,7 @@ Tests run against local `httptest` servers impersonating RPC endpoints — inclu
 ## Status
 
 First slice. The probe, the evidence log, the metrics endpoint, the webhook alerting and the report generator are implemented and tested. Not yet here: the multi-region Terraform examples, a Grafana dashboard, and any measurement against real paid endpoints — that needs provider accounts.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
